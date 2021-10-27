@@ -1,0 +1,41 @@
+apiVersion: skaffold/v2beta25
+kind: Config
+build:
+  artifacts:
+    - image: api
+      bazel:
+        target: //api:image.tar
+        args:
+          - '--platforms'
+          - '@io_bazel_rules_go//go/toolchain:linux_amd64'
+    - image: ui
+      custom:
+        buildCommand: 'bazel run ui:latest --platforms @build_bazel_rules_nodejs//toolchains/node:linux_amd64'
+        dependencies:
+          paths:
+            - ui/**/*
+      sync:
+        manual:
+          - src: ui/pages/**/*
+            dest: /app/ui/image.binary.runfiles/microservices/ui/pages/
+            strip: ui/pages/
+          - src: ui/public/**/*
+            dest: /app/ui/image.binary.runfiles/microservices/ui/public/
+            strip: ui/public/
+          - src: ui/styles/**/*
+            dest: /app/ui/image.binary.runfiles/microservices/ui/styles/
+            strip: ui/styles/
+
+deploy:
+  kubectl:
+    manifests:
+      - k8s/*
+portForward:
+  - resourceType: deployment
+    resourceName: api
+    port: 8080
+    localPort: 8080
+  - resourceType: deployment
+    resourceName: ui
+    port: 8080
+    localPort: 3000

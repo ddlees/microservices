@@ -1,0 +1,11 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@npm//next:index.bzl", "next")
+
+exports_files(
+    [
+        "tsconfig.json",
+        "package.json",
+        "node_modules",
+    ],
+    visibility = ["//:__subpackages__"],
+)

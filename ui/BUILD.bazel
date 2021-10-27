@@ -1,0 +1,61 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@npm//next:index.bzl", "next")
+load("@io_bazel_rules_docker//container:container.bzl", "container_bundle", "container_flatten", "container_image")
+load("@io_bazel_rules_docker//nodejs:image.bzl", "nodejs_image")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary")
+
+_RUNTIME_DEPS = [
+    "//:tsconfig.json",
+    "//:package.json",
+    "pages",
+    "public",
+    "styles",
+    ".babelrc",
+    "next.config.js",
+]
+
+_DEPENDENCIES = [
+    "@npm//@types",
+    "@npm//next",
+    "@npm//react",
+    "@npm//react-dom",
+    "@npm//typescript",
+]
+
+next(
+    name = "ui",
+    args = [
+        "dev",
+        "ui",
+    ],
+    data = _RUNTIME_DEPS + ["//:node_modules"],
+)
+
+next(
+    name = "dist",
+    args = [
+        "build",
+        "ui",
+        "$(@D)",
+    ],
+    data = _RUNTIME_DEPS + ["@npm//:node_modules"],
+    output_dir = True,
+)
+
+nodejs_image(
+    name = "image",
+    args = [
+        "dev",
+        "ui",
+    ],
+    data = _RUNTIME_DEPS + _DEPENDENCIES,
+    entry_point = "@npm//:node_modules/next/dist/bin/next",
+)
+
+container_bundle(
+    name = "latest",
+    images = {
+        "ui:latest": ":image",
+    },
+)

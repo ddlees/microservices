@@ -1,0 +1,8 @@
+node_modules
+.idea
+.ijwb
+.DS_Store
+*.log
+bazel-*
+dist
+user.bazelrc
